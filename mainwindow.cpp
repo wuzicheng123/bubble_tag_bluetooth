@@ -179,10 +179,13 @@ void MainWindow::plotDotLineChart(BleDataFrame frame)
 void MainWindow::addDevice(const QBluetoothDeviceInfo &info)
 {
     if (info.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
-        QString label = QString("%1 - %2").arg(info.name().isEmpty() ? "未知" : info.name(), info.address().toString());
-        QListWidgetItem* item = new QListWidgetItem(label,ui->deviceList);
-        // 关键: 将完整的 QBluetoothDeviceInfo 存储在 item 中
-        item->setData(Qt::UserRole,QVariant::fromValue(info));
+        if("Bubble_tag" == info.name())
+        {
+            QString label = QString("%1 - %2").arg(info.name().isEmpty() ? "未知" : info.name(), info.address().toString());
+            QListWidgetItem* item = new QListWidgetItem(label,ui->deviceList);
+            // 关键: 将完整的 QBluetoothDeviceInfo 存储在 item 中
+            item->setData(Qt::UserRole,QVariant::fromValue(info));
+        }
     }
 }
 
@@ -232,6 +235,8 @@ void MainWindow::serviceScanDone()
     for (const QBluetoothUuid &uuid : services) {
         QLowEnergyService *service = controller->createServiceObject(uuid);
         if (!service)
+            continue;
+        if("{0000abf0-0000-1000-8000-00805f9b34fb}" != uuid.toString())
             continue;
         QTreeWidgetItem *serviceItem = new QTreeWidgetItem(ui->serviceTree);
         serviceItem->setText(0, uuid.toString());
