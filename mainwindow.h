@@ -25,6 +25,13 @@ public:
     // 将原始字节数组解析为蓝牙数据帧
     BleDataFrame parseBleFrame(const QByteArray &data);
     void plotDotLineChart(BleDataFrame frame);
+    // 创建新Excel文件并写入表头
+    void createNewExcelFile(const QString &filePath);
+    // 校验Excel文件的列头
+    bool validateExcelHeaders(const QString &filePath);
+    bool isLabelExist(const QString &xlsxDoc, const QString &targetLabel);
+    // 导出QCustomPlot图像到临时PNG文件
+    bool exportPlotToImage(QCustomPlot *customPlot, int width, int height);
 
 private slots:
     void addDevice(const QBluetoothDeviceInfo& info);
@@ -46,13 +53,17 @@ private slots:
 
     void on_connectButton_clicked();
 
-    void on_readButton_clicked();
+    // void on_readButton_clicked();
 
     void on_writeButton_clicked();
 
     void on_subscribeButton_clicked();
 
     void on_clearButton_clicked();
+
+    void on_setPathButton_clicked();
+
+    void on_saveButton_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -69,6 +80,8 @@ private:
     QBluetoothDeviceInfo selectedDeviceInfo;
     QLowEnergyCharacteristic selectedCharacteristic;
     bool isSubscribed;
+    //存储文件路径（包含文件名）
+    QString m_fileFolderPath;
 };
 
 #endif // MAINWINDOW_H

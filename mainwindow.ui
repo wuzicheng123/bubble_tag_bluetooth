@@ -6,141 +6,327 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>777</width>
-    <height>622</height>
+    <width>1000</width>
+    <height>700</height>
    </rect>
   </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
-  </property>
   <property name="windowTitle">
-   <string>bubble_Tag</string>
+   <string>bubble_Tag - 安全阀密封检测系统</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">/* Material Design 浅色主题 */
+   <string notr="true">
+/* ========== 全局样式 ========== */
+* {
+    font-family: &quot;Microsoft YaHei&quot;, &quot;Segoe UI&quot;, &quot;Roboto&quot;;
+    font-size: 11pt;
+    outline: none; /* 移除焦点虚线框 */
+}
+
 QMainWindow {
-    background-color: #fafafa;
+    background-color: #f5f7fa;
 }
 
-QWidget {
-    background-color: #fafafa;
-    color: #212121;
-    font-family: &quot;Roboto&quot;, &quot;Microsoft YaHei&quot;;
-    /*font-size: 13px;*/
+QWidget#centralWidget {
+    background-color: transparent;
 }
 
-/* 基础按钮样式 */
+/* ========== 按钮样式 ========== */
 QPushButton {
-    font-family: &quot;Microsoft YaHei&quot;;
-}
-
-/* 使能状态 */
-QPushButton:enabled {
-    background-color: #007acc;
+    background-color: #0078d4;
     color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: bold;
+    transition: background 0.2s;
 }
 
-QPushButton:enabled:hover {
+QPushButton:hover {
+    background-color: #106ebe;
+}
+
+QPushButton:pressed {
     background-color: #005a9e;
 }
 
-QPushButton:enabled:pressed {
-    background-color: #004578;
+QPushButton:disabled {
+    background-color: #c7c7c7;
+    color: #6e6e6e;
 }
 
-/* 未使能状态 */
-QPushButton:disabled {
-    background-color: #cccccc;
-    color: #666666;
+/* ========== 分组框样式 ========== */
+QGroupBox {
+    background-color: #ffffff;
+    border: 1px solid #e1e5eb;
+    border-radius: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    font-weight: bold;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 16px;
+    top: 0px;
+    padding: 0 12px;
+    background-color: #ffffff;
+    color: #0078d4;
+}
+
+/* ========== 列表控件 ========== */
+QListWidget, QTreeWidget {
+    background-color: #ffffff;
+    border: 1px solid #d4d8dd;
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+}
+
+QListWidget::item, QTreeWidget::item {
+    padding: 6px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    border-radius: 4px;
+}
+
+QListWidget::item:selected, QTreeWidget::item:selected {
+    background-color: #e1f0fa;
+    color: #0078d4;
+}
+
+QListWidget::item:hover, QTreeWidget::item:hover {
+    background-color: #f5f5f5;
+}
+
+/* ========== 表格视图 ========== */
+QTableView {
+    border: 1px solid #d4d8dd;
+    border-radius: 8px;
+    background-color: white;
+    alternate-background-color: #fafbfc;
+    selection-background-color: #0078d4;
+}
+
+QTableView::item {
+    padding: 6px;
+    border-bottom: 1px solid #eef2f5;
+}
+
+QTableView::item:selected {
+    background-color: #0078d4;
+    color: white;
+}
+
+QHeaderView::section {
+    background-color: #f2f4f8;
+    padding: 8px;
+    border: none;
+    border-right: 1px solid #e1e5eb;
+    border-bottom: 1px solid #e1e5eb;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* ========== 菜单样式 ========== */
+QMenuBar {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e1e5eb;
+}
+
+QMenuBar::item {
+    padding: 6px 12px;
+    background-color: transparent;
+    border-radius: 4px;
+}
+
+QMenuBar::item:selected {
+    background-color: #e1f0fa;
+    color: #0078d4;
 }
 
 QMenu {
     background-color: white;
-    border: 1px solid #cccccc;
+    border: 1px solid #d4d8dd;
+    border-radius: 6px;
     padding: 4px;
 }
-        
+
 QMenu::item {
-    padding: 4px 20px 4px 20px;
-    border: 1px solid transparent;
+    padding: 6px 24px;
+    border-radius: 4px;
 }
-        
-QMenu::item:enabled {
-    color: #333333;
-}
-        
-QMenu::item:disabled {
-    color: #999999;
-    background-color: transparent;
-}
-        
-QMenu::item:enabled:selected {
+
+QMenu::item:selected {
     background-color: #0078d4;
     color: white;
 }
-        
-QMenu::item:enabled:pressed {
-    background-color: #005a9e;
-    color: white;
-}
-        
+
 QMenu::separator {
     height: 1px;
-    background-color: #e0e0e0;
-    margin: 4px 0px;
+    background-color: #e1e5eb;
+    margin: 4px 8px;
 }
 
-QTableView {
-	border: 1px solid #cccccc;
-	border-radius: 3px;
-	background-color: white;
-	alternate-background-color: #f6f6f6;
-	selection-background-color: #0078d4;
+/* ========== 标签样式 ========== */
+QLabel {
+    color: #2c3e50;
 }
-        
-QTableView::item {
-	padding: 5px;
-	border-bottom: 1px solid #eeeeee;
+
+QLabel[class=&quot;titleLabel&quot;] {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #0078d4;
 }
-        
-QTableView::item:selected {
-	background-color: #0078d4;
-	color: white;
+
+/* ========== 自定义绘图控件背景 ========== */
+QWidget#plotWidget {
+    background-color: #ffffff;
+    border: 1px solid #e1e5eb;
+    border-radius: 10px;
 }
-        
-QHeaderView::section {
-	background-color: #f0f0f0;
-	padding: 8px;
-	border: none;
-	border-right: 1px solid #cccccc;
-	border-bottom: 1px solid #cccccc;
-	font-weight: bold;
-}</string>
+   </string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_4">
     <property name="leftMargin">
-     <number>3</number>
+     <number>12</number>
     </property>
     <property name="topMargin">
-     <number>3</number>
+     <number>12</number>
     </property>
     <property name="rightMargin">
-     <number>3</number>
+     <number>12</number>
     </property>
     <property name="bottomMargin">
-     <number>3</number>
+     <number>12</number>
     </property>
     <property name="spacing">
-     <number>0</number>
+     <number>12</number>
     </property>
+    <item row="1" column="1">
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>320</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="title">
+       <string>检测结果</string>
+      </property>
+      <property name="flat">
+       <bool>false</bool>
+      </property>
+      <property name="checkable">
+       <bool>false</bool>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <property name="leftMargin">
+        <number>12</number>
+       </property>
+       <property name="topMargin">
+        <number>16</number>
+       </property>
+       <property name="rightMargin">
+        <number>12</number>
+       </property>
+       <property name="bottomMargin">
+        <number>12</number>
+       </property>
+       <property name="spacing">
+        <number>8</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>业务标签：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" colspan="4">
+        <widget class="QLabel" name="missionIDLabel">
+         <property name="styleSheet">
+          <string notr="true">font-weight: bold; color: #0078d4;</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>检测结果：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" colspan="4">
+        <widget class="QLabel" name="detectResultLabel">
+         <property name="styleSheet">
+          <string notr="true">font-weight: bold;</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>压力：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLabel" name="pressureLabel">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>直径：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="QLabel" name="diameterLabel">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_12">
+         <property name="text">
+          <string>最终结果：</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1" colspan="4">
+        <widget class="QLabel" name="resultLabel">
+         <property name="styleSheet">
+          <string notr="true">font-size: 12pt; font-weight: bold; color: #d83b01;</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
     <item row="0" column="0">
      <layout class="QGridLayout" name="gridLayout">
       <property name="spacing">
-       <number>0</number>
+       <number>8</number>
       </property>
       <item row="0" column="0">
        <widget class="QPushButton" name="scanButton">
@@ -149,6 +335,12 @@ QHeaderView::section {
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
         </property>
         <property name="text">
          <string>扫描设备</string>
@@ -163,6 +355,12 @@ QHeaderView::section {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="text">
          <string>连接设备</string>
         </property>
@@ -170,14 +368,17 @@ QHeaderView::section {
       </item>
       <item row="0" column="2">
        <widget class="QPushButton" name="clearButton">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>80</width>
+          <height>0</height>
+         </size>
         </property>
         <property name="text">
          <string>清图</string>
@@ -187,7 +388,7 @@ QHeaderView::section {
       <item row="1" column="0" colspan="3">
        <widget class="QListWidget" name="deviceList">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -197,14 +398,14 @@ QHeaderView::section {
       <item row="2" column="0" colspan="3">
        <widget class="QTreeWidget" name="serviceTree">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <column>
          <property name="text">
-          <string notr="true">1</string>
+          <string>服务 / 特征值</string>
          </property>
         </column>
        </widget>
@@ -212,290 +413,97 @@ QHeaderView::section {
      </layout>
     </item>
     <item row="0" column="1">
-     <widget class="MyCustomPlot" name="plotWidget" native="true"/>
+     <widget class="MyCustomPlot" name="plotWidget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>1</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
     </item>
     <item row="1" column="0">
      <widget class="QGroupBox" name="groupBox">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="title">
-       <string>特征值操作</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <item row="0" column="0">
-        <widget class="QPushButton" name="readButton">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>读取</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="writeButton">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>写入</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QPushButton" name="subscribeButton">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>订阅通知</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>数据：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1" colspan="2">
-        <widget class="QLineEdit" name="writeHexEdit">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>模式：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1" colspan="2">
-        <widget class="QComboBox" name="writeModeCombo">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <item>
-          <property name="text">
-           <string>Write Request</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Write Command</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="1" column="1">
-     <widget class="QGroupBox" name="groupBox_2">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <property name="title">
-       <string>结果栏</string>
+      <property name="minimumSize">
+       <size>
+        <width>320</width>
+        <height>0</height>
+       </size>
       </property>
-      <layout class="QGridLayout" name="gridLayout_3">
+      <property name="title">
+       <string>特征值操作</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
        <property name="leftMargin">
-        <number>0</number>
+        <number>12</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>16</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>12</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>12</number>
        </property>
        <property name="spacing">
-        <number>0</number>
+        <number>10</number>
        </property>
-       <item row="0" column="0" colspan="2">
-        <widget class="QLabel" name="label_3">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+       <item row="0" column="0">
+        <widget class="QPushButton" name="writeButton">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>32</height>
+          </size>
          </property>
          <property name="text">
-          <string>业务标签：</string>
+          <string>设置当前时间</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="2" colspan="3">
-        <widget class="QLabel" name="missionIDLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="subscribeButton">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>32</height>
+          </size>
          </property>
          <property name="text">
-          <string/>
+          <string>连接服务</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QLabel" name="label_4">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="saveButton">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>32</height>
+          </size>
          </property>
          <property name="text">
-          <string>检测结果：</string>
+          <string>导出报告</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="2" colspan="3">
-        <widget class="QLabel" name="detectResultLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="setPathButton">
+         <property name="minimumSize">
+          <size>
+           <width>90</width>
+           <height>32</height>
+          </size>
          </property>
          <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_5">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>压力：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1" colspan="2">
-        <widget class="QLabel" name="pressureLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="3">
-        <widget class="QLabel" name="label_8">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>直径：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="4">
-        <widget class="QLabel" name="diameterLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_12">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>结果：</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QLabel" name="resultLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string/>
+          <string>设置路径</string>
          </property>
         </widget>
        </item>
@@ -509,13 +517,12 @@ QHeaderView::section {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>777</width>
-     <height>22</height>
+     <width>1000</width>
+     <height>33</height>
     </rect>
    </property>
   </widget>
  </widget>
- <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
    <class>MyCustomPlot</class>

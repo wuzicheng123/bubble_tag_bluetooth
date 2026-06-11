@@ -1,6 +1,20 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "msgbox.h"
+#include <QFileDialog>
+#include <QSettings>
+#include <QFileInfo>
+#include <QCoreApplication>
+#include "3rdparty/xlsx/xlsxdocument.h"
+#include "wordengine.h"
+
+class ExcelHelper {
+public:
+    // 定义需要的列头
+    static const QStringList RequiredHeaders;
+};
+
+const QStringList ExcelHelper::RequiredHeaders = {"业务标签", "检测结果", "压力", "直径", "结果"};
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -8,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->serviceTree->setHeaderLabels(QStringList()<<"UUID / 属性"<<"值");
+    ui->serviceTree->setHeaderLabels(QStringList()<<"服务"<<"值");
     ui->serviceTree->setColumnWidth(0, 400);
     ui->serviceTree->setIndentation(20);
     ui->serviceTree->setAlternatingRowColors(true);
@@ -19,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
     currentService = nullptr;
     isSubscribed = false;
     ui->groupBox->setEnabled(false);
+    ui->setPathButton->setVisible(false);
+    ui->saveButton->setEnabled(false);
 
     connect(discoveryAgent,&QBluetoothDeviceDiscoveryAgent::deviceDiscovered,this,&MainWindow::addDevice);
     connect(discoveryAgent,&QBluetoothDeviceDiscoveryAgent::finished,this,&MainWindow::scanFinished);
@@ -31,6 +47,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->plotWidget->yAxis->setLabel("气泡数/个");
     ui->plotWidget->xAxis->setRange(0,60);
     ui->plotWidget->yAxis->setRange(0,90);
+
+    m_fileFolderPath = "";
 }
 
 MainWindow::~MainWindow()
@@ -176,6 +194,116 @@ void MainWindow::plotDotLineChart(BleDataFrame frame)
     ui->plotWidget->replot();
 }
 
+void MainWindow::createNewExcelFile(const QString &filePath)
+{
+    QXlsx::Document xlsx;
+    // 写入列头
+    for (int i = 0; i < ExcelHelper::RequiredHeaders.size(); ++i) {
+        xlsx.write(1, i + 1, ExcelHelper::RequiredHeaders[i]);
+    }
+    // 保存文件
+    if (!xlsx.saveAs(filePath)) {
+        qDebug() << "创建Excel文件失败:" << filePath;
+    }
+}
+
+bool MainWindow::validateExcelHeaders(const QString &filePath)
+{
+    QXlsx::Document xlsx(filePath);
+    if (!xlsx.dimension().isValid()) {
+        qDebug() << "无法打开Excel文件:" << filePath;
+        return false;
+    }
+    // 读取第一行的列头
+    QStringList existingHeaders;
+    int maxCol = 20; // 最多检查20列，或直到遇到空单元格
+    for (int col = 1; col <= maxCol; ++col) {
+        QXlsx::Cell *cell = xlsx.cellAt(1, col);
+        if (!cell || cell->value().toString().isEmpty()) {
+            break;
+        }
+        existingHeaders << cell->value().toString();
+    }
+    // 检查必须的列头是否都存在
+    for (const QString &required : ExcelHelper::RequiredHeaders) {
+        if (!existingHeaders.contains(required)) {
+            qDebug() << "缺失必须的列头:" << required;
+            return false;
+        }
+    }
+    // 所有必须列头都存在，校验通过（允许有多余的列）
+    return true;
+}
+
+bool MainWindow::isLabelExist(const QString &xlsxDoc, const QString &targetLabel)
+{
+    QXlsx::Document xlsx(xlsxDoc);
+    if (!xlsx.dimension().isValid()) {
+        qDebug() << "无法打开Excel文件:" << xlsxDoc;
+        return false;
+    }
+    int targetColumn = -1;
+    int maxColumn = 20; // 最多检查20列，可以按需调整
+    for (int col = 1; col <= maxColumn; ++col) {
+        QXlsx::Cell *cell = xlsx.cellAt(1, col);
+        if (cell && cell->value().toString() == "业务标签") {
+            targetColumn = col;
+            break;
+        }
+    }
+
+    // 如果找不到“业务标签”列，校验失败，直接返回false
+    if (targetColumn == -1) {
+        qWarning() << "Excel文件中未找到'业务标签'列头";
+        return false;
+    }
+
+    // 2. 遍历目标列，查找重复项
+    int currentRow = 2; // 数据从第二行开始
+    while (true) {
+        QXlsx::Cell *cell = xlsx.cellAt(currentRow, targetColumn);
+        if (!cell) {
+            break; // 单元格为空，表示此列内容结束，跳出循环
+        }
+
+        QString labelValue = cell->value().toString();
+        if (labelValue == targetLabel) {
+            return true; // 找到重复项
+        }
+        currentRow++;
+    }
+
+    return false; // 未发现重复
+}
+
+bool MainWindow::exportPlotToImage(QCustomPlot *customPlot, int width, int height)
+{
+    // 创建临时文件（保存在系统临时目录）
+    QTemporaryFile tempFile;
+    tempFile.setFileTemplate(QCoreApplication::applicationDirPath()+"/"+ui->missionIDLabel->text()+"1.png");
+    if (tempFile.open()) {
+        tempFile.close();
+        QString filePath = tempFile.fileName();
+        // 导出图像，指定宽高
+        customPlot->savePng(filePath,width,height);
+        qDebug() << "图像已导出:" << filePath;
+        // 注意：QTemporaryFile 在销毁时会自动删除文件，因此需要保留文件名或将其转换为常规文件
+        // 这里为了后续使用，直接返回文件路径，但在函数结束时 tempFile 对象会被销毁，文件会被删除。
+        // 解决方案：使用普通 QFile 并手动管理，或在此处不关闭 temporary 对象。
+        // 修正实现：使用普通文件
+        QString permanentPath = QCoreApplication::applicationDirPath()+"/"+ui->missionIDLabel->text()+".png";
+        if (QFile::copy(filePath, permanentPath)) {
+            qDebug() << "图像已保存到:" << permanentPath;
+            return true;
+        } else {
+            qDebug() << "复制图像文件失败";
+            return false;
+        }
+    }
+    qDebug() << "图像导出失败";
+    return false;
+}
+
 void MainWindow::addDevice(const QBluetoothDeviceInfo &info)
 {
     if (info.coreConfigurations() & QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
@@ -220,6 +348,7 @@ void MainWindow::deviceDisconnected()
     }
     currentService = nullptr;
     isSubscribed = false;
+    ui->subscribeButton->setText("连接服务");
 }
 
 void MainWindow::serviceDiscovered(const QBluetoothUuid &uuid)
@@ -334,6 +463,10 @@ void MainWindow::characteristicChanged(const QLowEnergyCharacteristic &info, con
         }
         // 第三步：提取气泡数据并绘制
         plotDotLineChart(frame);
+        if("" != ui->missionIDLabel->text())
+        {
+            ui->saveButton->setEnabled(true);
+        }
     }
 }
 
@@ -393,31 +526,22 @@ void MainWindow::on_serviceTree_itemClicked(QTreeWidgetItem *item, int column)
     }
     // 选中特征值时，确保操作组是启用的
     ui->groupBox->setEnabled(true);
-    ui->writeButton->setText("写入");
     selectedCharacteristic = item->data(0, Qt::UserRole).value<QLowEnergyCharacteristic>();
     bool canRead = selectedCharacteristic.properties() & QLowEnergyCharacteristic::Read;
     bool canWrite = (selectedCharacteristic.properties() & QLowEnergyCharacteristic::Write) ||
                     (selectedCharacteristic.properties() & QLowEnergyCharacteristic::WriteNoResponse);
     bool canSubscribe = (selectedCharacteristic.properties() & QLowEnergyCharacteristic::Notify) ||
                         (selectedCharacteristic.properties() & QLowEnergyCharacteristic::Indicate);
-    ui->readButton->setEnabled(canRead);
+    // ui->readButton->setEnabled(canRead);
     ui->writeButton->setEnabled(canWrite);
     ui->subscribeButton->setEnabled(canSubscribe);
     if (canSubscribe) {
-        ui->subscribeButton->setText(isSubscribed ? "取消订阅" : "订阅通知");
+        ui->subscribeButton->setText(isSubscribed ? "断开服务" : "连接服务");
     } else {
-        ui->subscribeButton->setText("不支持订阅");
+        ui->subscribeButton->setText("不支持连接");
     }
     QString selectedCharacteristicString = selectedCharacteristic.uuid().toString();
     qDebug()<<QString("选中特征值: %1").arg(selectedCharacteristicString);
-
-    if("{0000abf2-0000-1000-8000-00805f9b34fb}" == selectedCharacteristicString)
-    {
-        ui->writeButton->setText("设置当前时间");
-    }
-    else {
-        ui->writeButton->setText("写入");
-    }
 }
 
 void MainWindow::on_scanButton_clicked()
@@ -482,30 +606,30 @@ void MainWindow::on_connectButton_clicked()
     ui->connectButton->setEnabled(false);
 }
 
-void MainWindow::on_readButton_clicked()
-{
-    if (!selectedCharacteristic.isValid()) {
-        msgBox::show("错误","请先选中一个可读的特征值",1);
-        return;
-    }
-    if (!currentService) {
-        // 找到特征值所属的服务
-        for (int i = 0; i < ui->serviceTree->topLevelItemCount(); ++i) {
-            QTreeWidgetItem *svcItem = ui->serviceTree->topLevelItem(i);
-            for (int j = 0; j < svcItem->childCount(); ++j) {
-                QTreeWidgetItem *chItem = svcItem->child(j);
-                if (chItem->data(0, Qt::UserRole).value<QLowEnergyCharacteristic>().uuid() == selectedCharacteristic.uuid()) {
-                    currentService = svcItem->data(0, Qt::UserRole).value<QLowEnergyService*>();
-                    break;
-                }
-            }
-        }
-    }
-    if (currentService) {
-        currentService->readCharacteristic(selectedCharacteristic);
-        qDebug()<<QString("发起读取: %1").arg(selectedCharacteristic.uuid().toString());
-    }
-}
+// void MainWindow::on_readButton_clicked()
+// {
+//     if (!selectedCharacteristic.isValid()) {
+//         msgBox::show("错误","请先选中一个可读的特征值",1);
+//         return;
+//     }
+//     if (!currentService) {
+//         // 找到特征值所属的服务
+//         for (int i = 0; i < ui->serviceTree->topLevelItemCount(); ++i) {
+//             QTreeWidgetItem *svcItem = ui->serviceTree->topLevelItem(i);
+//             for (int j = 0; j < svcItem->childCount(); ++j) {
+//                 QTreeWidgetItem *chItem = svcItem->child(j);
+//                 if (chItem->data(0, Qt::UserRole).value<QLowEnergyCharacteristic>().uuid() == selectedCharacteristic.uuid()) {
+//                     currentService = svcItem->data(0, Qt::UserRole).value<QLowEnergyService*>();
+//                     break;
+//                 }
+//             }
+//         }
+//     }
+//     if (currentService) {
+//         currentService->readCharacteristic(selectedCharacteristic);
+//         qDebug()<<QString("发起读取: %1").arg(selectedCharacteristic.uuid().toString());
+//     }
+// }
 
 void MainWindow::on_writeButton_clicked()
 {
@@ -553,34 +677,34 @@ void MainWindow::on_writeButton_clicked()
         return;
     }
     //---------------------------------------------------------------------------------------
-    QString hexData = ui->writeHexEdit->text().trimmed();
-    if (hexData.isEmpty()) {
-        msgBox::show("错误","请输入十六进制数据，例如: 01 02 AB",1);
-        return;
-    }
-    QByteArray bytes = hexStringToByteArray(hexData);
-    if (bytes.isEmpty()) {
-        QMessageBox::warning(this, "错误", "无效的十六进制格式");
-        return;
-    }
-    if (!currentService) {
-        for (int i = 0; i < ui->serviceTree->topLevelItemCount(); ++i) {
-            QTreeWidgetItem *svcItem = ui->serviceTree->topLevelItem(i);
-            for (int j = 0; j < svcItem->childCount(); ++j) {
-                QTreeWidgetItem *chItem = svcItem->child(j);
-                if (chItem->data(0, Qt::UserRole).value<QLowEnergyCharacteristic>().uuid() == selectedCharacteristic.uuid()) {
-                    currentService = svcItem->data(0, Qt::UserRole).value<QLowEnergyService*>();
-                    break;
-                }
-            }
-        }
-    }
-    if (currentService) {
-        QLowEnergyService::WriteMode mode = (ui->writeModeCombo->currentIndex() == 0) ?
-                    QLowEnergyService::WriteWithResponse : QLowEnergyService::WriteWithoutResponse;
-        currentService->writeCharacteristic(selectedCharacteristic, bytes, mode);
-        qDebug()<<QString("写入特征值 %1 : %2").arg(selectedCharacteristic.uuid().toString(),QString::fromLatin1(bytes.toHex(' ')));
-    }
+    // QString hexData = ui->writeHexEdit->text().trimmed();
+    // if (hexData.isEmpty()) {
+    //     msgBox::show("错误","请输入十六进制数据，例如: 01 02 AB",1);
+    //     return;
+    // }
+    // QByteArray bytes = hexStringToByteArray(hexData);
+    // if (bytes.isEmpty()) {
+    //     QMessageBox::warning(this, "错误", "无效的十六进制格式");
+    //     return;
+    // }
+    // if (!currentService) {
+    //     for (int i = 0; i < ui->serviceTree->topLevelItemCount(); ++i) {
+    //         QTreeWidgetItem *svcItem = ui->serviceTree->topLevelItem(i);
+    //         for (int j = 0; j < svcItem->childCount(); ++j) {
+    //             QTreeWidgetItem *chItem = svcItem->child(j);
+    //             if (chItem->data(0, Qt::UserRole).value<QLowEnergyCharacteristic>().uuid() == selectedCharacteristic.uuid()) {
+    //                 currentService = svcItem->data(0, Qt::UserRole).value<QLowEnergyService*>();
+    //                 break;
+    //             }
+    //         }
+    //     }
+    // }
+    // if (currentService) {
+    //     QLowEnergyService::WriteMode mode = (ui->writeModeCombo->currentIndex() == 0) ?
+    //                 QLowEnergyService::WriteWithResponse : QLowEnergyService::WriteWithoutResponse;
+    //     currentService->writeCharacteristic(selectedCharacteristic, bytes, mode);
+    //     qDebug()<<QString("写入特征值 %1 : %2").arg(selectedCharacteristic.uuid().toString(),QString::fromLatin1(bytes.toHex(' ')));
+    // }
 }
 
 void MainWindow::on_subscribeButton_clicked()
@@ -614,7 +738,7 @@ void MainWindow::on_subscribeButton_clicked()
         currentService->writeDescriptor(notificationDesc, enableDescValue);
         qDebug()<<"订阅通知中...";
         isSubscribed = true;
-        ui->subscribeButton->setText("取消订阅");
+        ui->subscribeButton->setText("断开服务");
     } else {
         QLowEnergyDescriptor notificationDesc = selectedCharacteristic.descriptor(QBluetoothUuid::DescriptorType::ClientCharacteristicConfiguration);
         if (notificationDesc.isValid()) {
@@ -623,7 +747,7 @@ void MainWindow::on_subscribeButton_clicked()
             qDebug()<<"取消订阅";
         }
         isSubscribed = false;
-        ui->subscribeButton->setText("订阅通知");
+        ui->subscribeButton->setText("连接服务");
     }
 }
 
@@ -678,3 +802,87 @@ QByteArray MainWindow::hexStringToByteArray(const QString &hex)
     }
     return result;
 }
+
+void MainWindow::on_setPathButton_clicked()
+{
+    // 1. 加载上次选择的路径，若没有则默认为程序运行路径
+    QSettings settings("MyCompany", "MyApp");
+    QString lastFolderPath = settings.value("LastFolderPath", QCoreApplication::applicationDirPath()).toString();
+    m_fileFolderPath = QFileDialog::getExistingDirectory(this,
+                                                           tr("选择文件夹"),
+                                                           lastFolderPath,
+                                                           QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (m_fileFolderPath.isEmpty()) {
+        m_fileFolderPath = QCoreApplication::applicationDirPath();
+        settings.setValue("LastFolderPath", m_fileFolderPath);
+        return; // 用户取消选择
+    }
+    settings.setValue("LastFolderPath", m_fileFolderPath);
+}
+
+
+void MainWindow::on_saveButton_clicked()
+{
+    ui->saveButton->setEnabled(false);
+    if("" == ui->missionIDLabel->text())
+    {
+        qDebug()<<"导出失败，右侧无数据";
+    }
+    ui->saveButton->setEnabled(true);
+    // 1. 加载上次选择的路径，若没有则默认为程序运行路径
+    QSettings settings("MyCompany", "MyApp");
+    QString lastFolderPath = settings.value("LastFolderPath", QCoreApplication::applicationDirPath()).toString();
+    m_fileFolderPath = QFileDialog::getExistingDirectory(this,
+                                                         tr("导出"),
+                                                         lastFolderPath,
+                                                         QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    if (m_fileFolderPath.isEmpty()) {
+        m_fileFolderPath = lastFolderPath;
+        settings.setValue("LastFolderPath", m_fileFolderPath);
+        ui->saveButton->setEnabled(true);
+        return; // 用户取消选择
+    }
+    settings.setValue("LastFolderPath", m_fileFolderPath);
+    if(!exportPlotToImage(ui->plotWidget,513,512))
+    {
+        ui->saveButton->setEnabled(true);
+        return;
+    }
+    QString plotImagePath = QCoreApplication::applicationDirPath()+"/"+ui->missionIDLabel->text()+".png";
+    WordEngine wordEngine;
+    QString templatePath = QCoreApplication::applicationDirPath() + "/template.doc";
+    if (!wordEngine.openTemplate(templatePath)) {
+        QMessageBox::information(this,"错误","无法打开模板，请确保已安装 Word 或 WPS");
+        QFile::remove(plotImagePath);
+        ui->saveButton->setEnabled(true);
+        return;
+    }
+    // 替换书签
+    wordEngine.replaceBookmarkText("business_tag", ui->missionIDLabel->text());
+    wordEngine.replaceBookmarkText("detect_result",ui->detectResultLabel->text());
+    wordEngine.replaceBookmarkText("detect_result1",ui->detectResultLabel->text());
+    wordEngine.replaceBookmarkText("detect_result2",ui->detectResultLabel->text());
+    wordEngine.replaceBookmarkText("diameter_value",ui->diameterLabel->text());
+    wordEngine.replaceBookmarkText("pressure_value",ui->pressureLabel->text());
+    wordEngine.replaceBookmarkText("test_result",ui->resultLabel->text());
+    wordEngine.replaceBookmarkText("test_result1",ui->resultLabel->text());
+    QString yesOrNo = ui->resultLabel->text()=="合格"?"符合":"不符合";
+    wordEngine.replaceBookmarkText("yes_no",yesOrNo);
+    // 插入图片
+    wordEngine.insertImageAtBookmark("plot_image", plotImagePath, 0, 0);
+    // 保存报告
+    QString saveFileName = ui->missionIDLabel->text() + "_报告.doc";
+    QString savePath = m_fileFolderPath + "/" + saveFileName;
+
+    if (wordEngine.saveAs(savePath)) {
+        wordEngine.close();
+        QMessageBox::information(this,"成功",QString("报告已生成：%1\n使用应用：%2")
+                                                   .arg(savePath).arg(wordEngine.currentApplicationName()));
+    } else {
+        QMessageBox::information(this, "错误", "保存报告失败");
+    }
+    QFile::remove(plotImagePath);
+    ui->saveButton->setEnabled(true);
+    // wordEngine 析构时自动关闭应用
+}
+

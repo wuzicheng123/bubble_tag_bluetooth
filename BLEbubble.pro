@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets bluetooth
+QT       += core gui widgets bluetooth axcontainer printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
@@ -29,17 +29,21 @@ SOURCES += \
         mainwindow.cpp \
     msgbox.cpp \
     qcustomplot.cpp \
-    mycustomplot.cpp
+    mycustomplot.cpp \
+    wordengine.cpp
 
 HEADERS += \
     Define.h \
         mainwindow.h \
     msgbox.h \
     qcustomplot.h \
-    mycustomplot.h
+    mycustomplot.h \
+    wordengine.h
 
 FORMS += \
         mainwindow.ui
+
+include(3rdparty/xlsx/qtxlsx.pri)
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -47,3 +51,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 QMAKE_PROJECT_DEPTH = 0
+
+RESOURCES += \
+    resources.qrc
+
+RC_ICONS = ./icons/f2pv3-g40d7-001.ico

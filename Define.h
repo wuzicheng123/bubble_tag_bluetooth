@@ -2,6 +2,7 @@
 #define DEFINE_H
 
 #include <QByteArray>
+#include <QStringList>
 
 struct BleDataFrame {
     bool valid;                 // 是否解析成功
